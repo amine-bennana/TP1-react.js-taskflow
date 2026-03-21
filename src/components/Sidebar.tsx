@@ -10,14 +10,16 @@ interface Project {
 interface SidebarProps {
   projects: Project[];
   isOpen: boolean;
+  onRenameProject?: (project: Project) => void;
+  onDeleteProject?: (id: string) => void;
 }
 
-export default function Sidebar({ projects, isOpen }: SidebarProps) {
+export default function Sidebar({ projects, isOpen, onRenameProject, onDeleteProject }: SidebarProps) {
+
   return (
     <aside
-      className={`${styles.sidebar} ${
-        isOpen ? styles.open : styles.closed
-      }`}
+      className={`${styles.sidebar} ${isOpen ? styles.open : styles.closed
+        }`}
     >
       <h2 className={styles.title}>
         Mes Projets
@@ -25,19 +27,49 @@ export default function Sidebar({ projects, isOpen }: SidebarProps) {
 
       <ul className={styles.list}>
         {projects.map((p) => (
-          <li key={p.id}>
-            <NavLink 
-              to={`/projects/${p.id}`} 
-              className={({ isActive }) => 
+          <li key={p.id} className={styles.listItem}>
+            <NavLink
+              to={`/projects/${p.id}`}
+              className={({ isActive }) =>
                 `${styles.item} ${isActive ? styles.active : ''}`
               }
             >
-              <span
-                className={styles.dot}
-                style={{ background: p.color }}
-              />
-              {p.name}
+              <div className={styles.itemContent}>
+                <span
+                  className={styles.dot}
+                  style={{ background: p.color }}
+                />
+                <span className={styles.projectName}>{p.name}</span>
+              </div>
             </NavLink>
+            <div className={styles.actions}>
+              {onRenameProject && (
+                <button
+                  className={styles.actionBtn}
+                  onClick={(e) => {
+                    e.preventDefault();
+                    e.stopPropagation();
+                    onRenameProject(p);
+                  }}
+                  title="Renommer"
+                >
+                  ✏️
+                </button>
+              )}
+              {onDeleteProject && (
+                <button
+                  className={styles.actionBtn}
+                  onClick={(e) => {
+                    e.preventDefault();
+                    e.stopPropagation();
+                    onDeleteProject(p.id);
+                  }}
+                  title="Supprimer"
+                >
+                  🗑️
+                </button>
+              )}
+            </div>
           </li>
         ))}
       </ul>

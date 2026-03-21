@@ -115,9 +115,8 @@ export default function Dashboard() {
         <Sidebar 
           projects={projects} 
           isOpen={sidebarOpen} 
-          // Si Sidebar acceptait des fonctions pour editer/supprimer, on les passerait ici:
-          // onRenameProject={renameProject}
-          // onDeleteProject={deleteProject}
+          onRenameProject={renameProject}
+          onDeleteProject={deleteProject}
         />
         
         <div className={styles.content}>
