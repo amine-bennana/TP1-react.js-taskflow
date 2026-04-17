@@ -1,6 +1,8 @@
 import { useState, useEffect } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
-import { useAuth } from '../features/auth/AuthContext';
+import { useSelector, useDispatch } from 'react-redux';
+import type { RootState } from '../store';
+import { logout } from '../features/auth/authSlice';
 import api from '../api/axios';
 import Header from '../components/Header';
 import styles from './ProjectDetail.module.css';
@@ -14,7 +16,8 @@ interface Project {
 export default function ProjectDetail() {
   const { id } = useParams();
   const navigate = useNavigate();
-  const { state: authState, dispatch } = useAuth();
+  const dispatch = useDispatch();
+  const user = useSelector((state: RootState) => state.auth.user);
   
   const [project, setProject] = useState<Project | null>(null);
   const [loading, setLoading] = useState(true);
@@ -36,8 +39,8 @@ export default function ProjectDetail() {
         title="TaskFlow"
         onMenuClick={() => navigate('/dashboard')}
         // FIX BUG 2: Optionnal chaining sur authState.user pour éviter un crash si l'utilisateur est null (bien que le ProtectedRoute le gère normalement, cela évite l'erreur TS/runtime)
-        userName={authState.user?.name}
-        onLogout={() => dispatch({ type: 'LOGOUT' })}
+        userName={user?.name}
+        onLogout={() => dispatch(logout())}
       />
       
       <main className={styles.main}>

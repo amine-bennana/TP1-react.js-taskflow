@@ -1,10 +1,20 @@
 import { Routes, Route, Navigate } from 'react-router-dom';
+import { useSelector } from 'react-redux';
+import { useEffect } from 'react';
+import { setAuthToken } from './api/axios';
+import type { RootState } from './store';
 import Login from './features/auth/Login';
 import Dashboard from './pages/Dashboard';
 import ProjectDetail from './pages/ProjectDetail';
 import ProtectedRoute from './components/ProtectedRoute';
 
 export default function App() {
+  const token = useSelector((state: RootState) => state.auth.token);
+
+  useEffect(() => {
+    setAuthToken(token);
+  }, [token]);
+
   return (
     <Routes>
       <Route path="/login" element={<Login />} />

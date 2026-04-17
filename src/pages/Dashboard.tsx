@@ -1,104 +1,30 @@
-import { useState, useEffect } from 'react';
-import axios from 'axios';
-import { useAuth } from '../features/auth/AuthContext';
-import api from '../api/axios';
+import { useState } from 'react';
+import { useSelector, useDispatch } from 'react-redux';
+import useProjects from '../hooks/useProjects';
+import type { RootState } from '../store';
+import { logout } from '../features/auth/authSlice';
 import Header from '../components/Header';
 import Sidebar from '../components/Sidebar';
 import MainContent from '../components/MainContent';
 import ProjectForm from '../components/ProjectForm';
 import styles from './Dashboard.module.css';
 
-interface Project {
-  id: string;
-  name: string;
-  color: string;
-}
-
-interface Column {
-  id: string;
-  title: string;
-  tasks: string[];
-}
 
 export default function Dashboard() {
-  const { state: authState, dispatch } = useAuth();
+  const dispatch = useDispatch();
+  const user = useSelector((state: RootState) => state.auth.user);
   const [sidebarOpen, setSidebarOpen] = useState(true);
   
-  const [projects, setProjects] = useState<Project[]>([]);
-  const [columns, setColumns] = useState<Column[]>([]);
-  
-  const [loading, setLoading] = useState(true);
+  const { projects, columns, loading, error, addProject, renameProject, deleteProject } = useProjects();
   const [showForm, setShowForm] = useState(false);
   const [saving, setSaving] = useState(false);
-  const [error, setError] = useState<string | null>(null);
 
-  // GET — charger les données au montage
-  useEffect(() => {
-    async function fetchData() {
-      try {
-        const [projRes, colRes] = await Promise.all([
-          api.get('/projects'),
-          api.get('/columns'),
-        ]);
-        
-        setProjects(projRes.data);
-        setColumns(colRes.data);
-      } catch (e) {
-        console.error(e);
-      } finally {
-        setLoading(false);
-      }
-    }
-    
-    fetchData();
-  }, []);
-
-  // POST — ajouter un projet
-  async function addProject(name: string, color: string) {
+  const handleAddProject = async (name: string, color: string) => {
     setSaving(true);
-    setError(null);
-    try {
-      const { data } = await api.post('/projects', { name, color });
-      setProjects(prev => [...prev, data]);
-    } catch (err) {
-      if (axios.isAxiosError(err)) {
-        setError(err.response?.data?.message || `Erreur ${err.response?.status}`);
-      } else {
-        setError('Erreur inconnue');
-      }
-    } finally {
-      setSaving(false);
-    }
-  }
-
-  // PUT — renommer un projet
-  async function renameProject(project: Project) {
-    const newName = prompt('Nouveau nom :', project.name);
-    
-    if (newName && newName.trim() !== '' && newName !== project.name) {
-      try {
-        const { data } = await api.put(`/projects/${project.id}`, { 
-          ...project, 
-          name: newName 
-        });
-        setProjects(prev => prev.map(p => (p.id === project.id ? data : p)));
-      } catch (e) {
-        console.error('Erreur lors du renommage du projet:', e);
-      }
-    }
-  }
-
-  // DELETE — supprimer un projet
-  async function deleteProject(id: string) {
-    if (confirm('Êtes-vous sûr ?')) {
-      try {
-        await api.delete(`/projects/${id}`);
-        setProjects(prev => prev.filter(p => p.id !== id));
-      } catch (e) {
-        console.error('Erreur lors de la suppression du projet:', e);
-      }
-    }
-  }
+    await addProject(name, color);
+    setSaving(false);
+    setShowForm(false);
+  };
 
   if (loading) return <div className={styles.loading}>Chargement...</div>;
 
@@ -107,8 +33,8 @@ export default function Dashboard() {
       <Header
         title="TaskFlow"
         onMenuClick={() => setSidebarOpen(p => !p)}
-        userName={authState.user?.name}
-        onLogout={() => dispatch({ type: 'LOGOUT' })}
+        userName={user?.name}
+        onLogout={() => dispatch(logout())}
       />
       
       <div className={styles.body}>
@@ -134,10 +60,7 @@ export default function Dashboard() {
             ) : (
               <ProjectForm
                 submitLabel="Créer"
-                onSubmit={(name: string, color: string) => {
-                  addProject(name, color);
-                  setShowForm(false);
-                }}
+                onSubmit={(name: string, color: string) => handleAddProject(name, color)}
                 onCancel={() => setShowForm(false)}
               />
             )}
